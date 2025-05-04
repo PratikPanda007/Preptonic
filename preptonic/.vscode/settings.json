@@ -1,0 +1,8 @@
+{
+    "appService.defaultWebAppToDeploy": "/subscriptions/d4b0babd-8e09-4e11-8248-7cf541956ab1/resourceGroups/rg_preptonic/providers/Microsoft.Web/sites/preptonic",
+    "appService.deploySubpath": "out",
+    "appService.zipIgnorePattern": [
+        "node_modules{,/**}",
+        ".vscode{,/**}"
+    ]
+}
