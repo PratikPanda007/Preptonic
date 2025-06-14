@@ -12,3 +12,4 @@ const nextConfig: NextConfig = {
 };
 
 export default nextConfig;
+// from package,json -> "postbuild": "copy web.config .next\\web.config",
