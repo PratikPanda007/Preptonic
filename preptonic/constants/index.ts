@@ -1,6 +1,4 @@
-// @ts-ignore
-// import { CreateAssistantDTO } from "@vapi-ai/web/dist/api";
-import { CreateAssistantDTO } from "@vapi-ai/web";
+import { CreateAssistantDTO } from "@vapi-ai/web/dist/api";
 import { z } from "zod";
 
 export const mappings = {
@@ -216,7 +214,7 @@ export const dummyInterviews: Interview[] = [
     level: "Junior",
     questions: ["What is React?"],
     finalized: false,
-    createdAt: "2025-04-21T10:00:00Z",
+    createdAt: "2024-03-15T10:00:00Z",
   },
   {
     id: "2",
@@ -227,6 +225,6 @@ export const dummyInterviews: Interview[] = [
     level: "Senior",
     questions: ["What is Node.js?"],
     finalized: false,
-    createdAt: "2025-04-23T15:30:00Z",
+    createdAt: "2024-03-14T15:30:00Z",
   },
 ];

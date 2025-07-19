@@ -1,29 +1,246 @@
-import React from 'react'
-import Image from 'next/image'
-import { cn } from '@/lib/utils';
+"use client";
+
+import Image from "next/image";
+import { useState, useEffect } from "react";
+import { useRouter } from "next/navigation";
+
+import { cn } from "@/lib/utils";
+import { vapi } from "@/lib/vapi.sdk";
+import { interviewer } from "@/constants";
+import { createFeedback } from "@/lib/actions/general.action";
 
 enum CallStatus {
-    INACTIVE = "INACTIVE",
-    CONNECTING = "CONNECTING",
-    ACTIVE = "ACTIVE",
-    FINISHED = "FINISHED",
-  }
-  
+  INACTIVE = "INACTIVE",
+  CONNECTING = "CONNECTING",
+  ACTIVE = "ACTIVE",
+  FINISHED = "FINISHED",
+}
 
-const Agent = ({userName} : AgentProps) => {
-    const callStatus = CallStatus.INACTIVE;
-    const isSpeaking = true;
+interface SavedMessage {
+  role: "user" | "system" | "assistant";
+  content: string;
+}
 
-    const messages = [
-      'What\'s your Name',
-      'My Name is John Doe, Nice to mee you'
-    ];
+const Agent = ({
+  userName,
+  userId,
+  interviewId,
+  feedbackId,
+  type,
+  questions,
+}: AgentProps) => {
+  const router = useRouter();
+  const [callStatus, setCallStatus] = useState<CallStatus>(CallStatus.INACTIVE);
+  const [messages, setMessages] = useState<SavedMessage[]>([]);
+  const [isSpeaking, setIsSpeaking] = useState(false);
+  const [lastMessage, setLastMessage] = useState<string>("");
 
-    const lastMessage = messages[messages.length-1]
-    
+  useEffect(() => {
+    const onCallStart = () => {
+      setCallStatus(CallStatus.ACTIVE);
+    };
+
+    const onCallEnd = () => {
+      setCallStatus(CallStatus.FINISHED);
+    };
+
+    const onMessage = (message: Message) => {
+      if (message.type === "transcript" && message.transcriptType === "final") {
+        const newMessage = { role: message.role, content: message.transcript };
+        setMessages((prev) => [...prev, newMessage]);
+      }
+    };
+
+    const onSpeechStart = () => {
+      console.log("speech start");
+      setIsSpeaking(true);
+    };
+
+    const onSpeechEnd = () => {
+      console.log("speech end");
+      setIsSpeaking(false);
+    };
+
+    const onError = (error: Error) => {
+      console.log("Error:", error);
+    };
+
+    vapi.on("call-start", onCallStart);
+    vapi.on("call-end", onCallEnd);
+    vapi.on("message", onMessage);
+    vapi.on("speech-start", onSpeechStart);
+    vapi.on("speech-end", onSpeechEnd);
+    vapi.on("error", onError);
+
+    return () => {
+      vapi.off("call-start", onCallStart);
+      vapi.off("call-end", onCallEnd);
+      vapi.off("message", onMessage);
+      vapi.off("speech-start", onSpeechStart);
+      vapi.off("speech-end", onSpeechEnd);
+      vapi.off("error", onError);
+    };
+  }, []);
+
+  useEffect(() => {
+    if (messages.length > 0) {
+      setLastMessage(messages[messages.length - 1].content);
+    }
+
+    const handleGenerateFeedback = async (messages: SavedMessage[]) => {
+      console.log("handleGenerateFeedback");
+
+      const { success, feedbackId: id } = await createFeedback({
+        interviewId: interviewId!,
+        userId: userId!,
+        transcript: messages,
+        feedbackId,
+      });
+
+      if (success && id) {
+        router.push(`/interview/${interviewId}/feedback`);
+      } else {
+        console.log("Error saving feedback");
+        router.push("/");
+      }
+    };
+
+    if (callStatus === CallStatus.FINISHED) {
+      if (type === "generate") {
+        router.push("/");
+      } else {
+        handleGenerateFeedback(messages);
+      }
+    }
+  }, [messages, callStatus, feedbackId, interviewId, router, type, userId]);
+
+  // const handleCall = async () => {
+  //   setCallStatus(CallStatus.CONNECTING);
+
+  //   if (type === "generate") {
+  //     await vapi.start(process.env.NEXT_PUBLIC_VAPI_WORKFLOW_ID!, {
+  //       variableValues: {
+  //         username: userName,
+  //         userid: userId,
+  //       },
+  //     });
+  //   } else {
+  //     let formattedQuestions = "";
+  //     if (questions) {
+  //       formattedQuestions = questions
+  //         .map((question) => `- ${question}`)
+  //         .join("\n");
+  //     }
+
+  //     await vapi.start(interviewer, {
+  //       variableValues: {
+  //         questions: formattedQuestions,
+  //       },
+  //     });
+  //   }
+  // };
+
+  // const handleCall = async () => {
+  //   setCallStatus(CallStatus.CONNECTING);
+
+  //   if (type === "generate") {
+  //     // 🔹 1. Trigger the workflow via HTTP (safe even on Free plan)
+  //     try {
+  //       await fetch(
+  //         `https://api.vapi.ai/v1/workflows/${process.env.NEXT_PUBLIC_VAPI_WORKFLOW_ID}/trigger`,
+  //         {
+  //           method: "POST",
+  //           headers: {
+  //             Authorization: `Bearer ${process.env.NEXT_PUBLIC_VAPI_WEB_TOKEN}`,
+  //             "Content-Type": "application/json",
+  //           },
+  //           body: JSON.stringify({
+  //             variableValues: {
+  //               username: userName,
+  //               userid: userId,
+  //             },
+  //           }),
+  //         }
+  //       );
+  //       console.log("✅ Workflow triggered successfully");
+  //     } catch (error) {
+  //       console.error("❌ Error triggering workflow:", error);
+  //     }
+
+  //     // 🔹 2. (Optional) Start Vapi Assistant for voice response
+  //     try {
+  //       await vapi.start(process.env.NEXT_PUBLIC_VAPI_ASSISTANT_ID!, {
+  //         variableValues: {
+  //           username: userName,
+  //           userid: userId,
+  //         },
+  //       });
+  //     } catch (error) {
+  //       console.error("❌ Error starting Vapi Assistant:", error);
+  //     }
+  //   } else {
+  //     // 🔹 Default interviewer logic with formatted questions
+  //     let formattedQuestions = "";
+  //     if (questions) {
+  //       formattedQuestions = questions
+  //         .map((question) => `- ${question}`)
+  //         .join("\n");
+  //     }
+
+  //     try {
+  //       await vapi.start(interviewer, {
+  //         variableValues: {
+  //           questions: formattedQuestions,
+  //         },
+  //       });
+  //     } catch (error) {
+  //       console.error("❌ Error starting Interviewer Assistant:", error);
+  //     }
+  //   }
+  // };
+
+  const handleCall = async () => {
+    setCallStatus(CallStatus.CONNECTING);
+
+    if (type === "generate") {
+      await vapi.start(
+        undefined,
+        undefined,
+        undefined,
+        process.env.NEXT_PUBLIC_VAPI_WORKFLOW_ID!,
+        {
+          variableValues: {
+            username: userName,
+            userid: userId,
+          },
+        }
+      );
+    } else {
+      let formattedQuestions = "";
+      if (questions) {
+        formattedQuestions = questions
+          .map((question) => `- ${question}`)
+          .join("\n");
+      }
+
+      await vapi.start(interviewer, {
+        variableValues: {
+          questions: formattedQuestions,
+        },
+      });
+    }
+  };
+
+  const handleDisconnect = () => {
+    setCallStatus(CallStatus.FINISHED);
+    vapi.stop();
+  };
+
+  const randomNumber = Math.floor(Math.random() * 5) + 1;
+
   return (
     <>
-        <div className="call-view">
+      <div className="call-view">
         {/* AI Interviewer Card */}
         <div className="card-interviewer">
           <div className="avatar">
@@ -43,7 +260,7 @@ const Agent = ({userName} : AgentProps) => {
         <div className="card-border">
           <div className="card-content">
             <Image
-              src="/user-avatar.png"
+              src={`/user-avatar-${randomNumber}.png`}
               alt="profile-image"
               width={539}
               height={539}
@@ -55,9 +272,15 @@ const Agent = ({userName} : AgentProps) => {
       </div>
 
       {messages.length > 0 && (
-        <div className='transcript-border'>
-          <div className='transcript'>
-            <p key={lastMessage} className={cn('transition-opacity dutation-500 opacity-0', 'animate-fadeIn opacity-100')}>
+        <div className="transcript-border">
+          <div className="transcript">
+            <p
+              key={lastMessage}
+              className={cn(
+                "transition-opacity duration-500 opacity-0",
+                "animate-fadeIn opacity-100"
+              )}
+            >
               {lastMessage}
             </p>
           </div>
@@ -66,7 +289,7 @@ const Agent = ({userName} : AgentProps) => {
 
       <div className="w-full flex justify-center">
         {callStatus !== "ACTIVE" ? (
-          <button className="relative btn-call">
+          <button className="relative btn-call" onClick={() => handleCall()}>
             <span
               className={cn(
                 "absolute animate-ping rounded-full opacity-75",
@@ -81,13 +304,13 @@ const Agent = ({userName} : AgentProps) => {
             </span>
           </button>
         ) : (
-          <button className="btn-disconnect">
+          <button className="btn-disconnect" onClick={() => handleDisconnect()}>
             End
           </button>
         )}
       </div>
     </>
-  )
-}
+  );
+};
 
-export default Agent
+export default Agent;

@@ -1,15 +1,22 @@
-import type { NextConfig } from 'next';
+import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
-  // output: 'export',
-  //trailingSlash: true, // optional: adds slashes to all routes (helps with Azure or S3 style hosting)
+  /* config options here */
+  // images: {
+  //   remotePatterns: [
+  //     {
+  //       protocol: "https",
+  //       hostname: "ik.imagekit.io",
+  //       port: "",
+  //     },
+  //   ],
+  // },
   eslint: {
     ignoreDuringBuilds: true,
   },
   typescript: {
     ignoreBuildErrors: true,
-  }
+  },
 };
 
 export default nextConfig;
-// from package,json -> "postbuild": "copy web.config .next\\web.config",

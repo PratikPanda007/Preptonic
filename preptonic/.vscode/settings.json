@@ -1,8 +1,29 @@
 {
-    "appService.defaultWebAppToDeploy": "/subscriptions/d4b0babd-8e09-4e11-8248-7cf541956ab1/resourceGroups/rg_preptonic/providers/Microsoft.Web/sites/preptonic",
-    "appService.deploySubpath": "out",
-    "appService.zipIgnorePattern": [
-        "node_modules{,/**}",
-        ".vscode{,/**}"
-    ]
+  "editor.defaultFormatter": "esbenp.prettier-vscode",
+  "editor.formatOnSave": true,
+  "editor.codeActionsOnSave": {
+    "source.fixAll.eslint": "explicit",
+    "source.addMissingImports": "explicit"
+  },
+  "prettier.tabWidth": 2,
+  "prettier.useTabs": false,
+  "prettier.semi": true,
+  "prettier.singleQuote": false,
+  "prettier.jsxSingleQuote": false,
+  "prettier.trailingComma": "es5",
+  "prettier.arrowParens": "always",
+  "[json]": {
+    "editor.defaultFormatter": "esbenp.prettier-vscode"
+  },
+  "[typescript]": {
+    "editor.defaultFormatter": "esbenp.prettier-vscode"
+  },
+  "[typescriptreact]": {
+    "editor.defaultFormatter": "esbenp.prettier-vscode"
+  },
+  "[javascriptreact]": {
+    "editor.defaultFormatter": "esbenp.prettier-vscode"
+  },
+  "typescript.tsdk": "node_modules/typescript/lib",
+  "editor.wordWrap": "on"
 }
